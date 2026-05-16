@@ -23,12 +23,16 @@ export const createTask=asyncHandler(async(req:Request,res:Response)=>{
 })
 
 export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
+  
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
     const skip = (page - 1) * limit;
     const status = req.query.status as string;
     const priority = req.query.priority as string;
+    const sortBy=(req.query.sortBy as string) ||"createdAt"
+    const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
+
     const where: any = {};
     if (status) {
       where.status = status;
@@ -44,7 +48,7 @@ export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
       skip,
       take: limit,
       orderBy: {
-        dueDate: "asc",
+        [sortBy]:sortOrder
       },
       include: {
         assignedTo: {
@@ -56,6 +60,7 @@ export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
       },
     });
     const total = await prisma.task.count({ where });
+    const totalPages=Math.ceil(total/limit)
     return res.status(200).json({
       success: true,
       data: tasks,
@@ -63,6 +68,7 @@ export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
         page,
         limit,
         total,
+        totalPages
       },
     });
 })
