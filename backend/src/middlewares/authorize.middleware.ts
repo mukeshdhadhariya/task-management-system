@@ -2,7 +2,7 @@ import { Request,Response,NextFunction } from "express";
 import { ApiError } from "../utils/apierror";
 import { UserRole } from "../constants/roles";
 
-export const validate=(...permitedRoles:UserRole[])=>{
+export const validateOwner=(...permitedRoles:UserRole[])=>{
 
     return (req:Request,res:Response,next:NextFunction)=>{
 

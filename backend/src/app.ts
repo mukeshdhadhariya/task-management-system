@@ -4,6 +4,10 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser"
 
+import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
+import taskRoutes from "./routes/task.routes";
+
 const app=express();
 
 app.use(cors({
@@ -16,6 +20,9 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser())
 
+app.use("/api/auth",);
+app.use("/api/users",);
+app.use("/api/tasks",)
 app.get("/health", (_, res) => {
   res.json({ success: true, message: "API running" });
 });
