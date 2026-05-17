@@ -34,7 +34,7 @@ export const uploadTaskDocuments = asyncHandler(
     }
 
     const MAX_FILES = 3;
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB per file
     const ALLOWED_MIMES = ["application/pdf"];
 
     const totalAfterUpload = task.attachments.length + files.length;
