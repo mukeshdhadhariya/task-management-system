@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Readable } from "stream";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apierror";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -136,8 +137,18 @@ export const downloadTaskDocument = asyncHandler(
       throw new ApiError(403, "You cannot access this document");
     }
 
-    // Cloudinary stores a public URL in `attachment.url`.
-    // Redirect the client to the secure Cloudinary URL for download.
-    return res.redirect(302, attachment.url);
+    const fileResponse = await fetch(attachment.url);
+
+    if (!fileResponse.ok || !fileResponse.body) {
+      throw new ApiError(502, "Unable to fetch document");
+    }
+
+    res.setHeader("Content-Type", attachment.mimeType || "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(attachment.originalName)}"`
+    );
+
+    return Readable.fromWeb(fileResponse.body as any).pipe(res);
   }
 );

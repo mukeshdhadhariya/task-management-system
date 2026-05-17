@@ -65,8 +65,7 @@ export const TaskDetailsPage = () => {
     <a
       key={attachment.id}
       href={`${API_ORIGIN}${attachment.downloadUrl}`}
-      target="_blank"
-      rel="noreferrer"
+      download={attachment.originalName}
       className="block rounded-2xl border border-slate-200 p-4 transition hover:bg-slate-50"
     >
       <div className="flex items-center justify-between gap-4">
