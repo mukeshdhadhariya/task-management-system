@@ -2,43 +2,49 @@ import { z } from "zod";
 
 export const taskQuerySchema = z.object({
 
-    page: z
-        .string()
-        .optional(),
+    page: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.string().optional()
+    ),
 
-    limit: z
-        .string()
-        .optional(),
+    limit: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.string().optional()
+    ),
 
-    status: z
-        .enum([
+    status: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.enum([
         "TODO",
         "IN_PROGRESS",
         "DONE",
-        ])
-        .optional(),
+        ]).optional()
+    ),
 
-    priority: z
-        .enum([
+    priority: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.enum([
         "LOW",
         "MEDIUM",
         "HIGH",
-        ])
-        .optional(),
+        ]).optional()
+    ),
 
-    sortBy: z
-        .enum([
+    sortBy: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.enum([
         "createdAt",
         "dueDate",
         "priority",
-        ])
-        .optional(),
+        ]).optional()
+    ),
 
-    sortOrder: z
-        .enum([
+    sortOrder: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.enum([
         "asc",
         "desc",
-        ])
-        .optional(),
+        ]).optional()
+    ),
         
 });

@@ -17,14 +17,33 @@ let io: Server | undefined;
 const getToken = (socket: Socket) => {
   const cookieHeader = socket.handshake.headers.cookie;
   if (typeof cookieHeader === "string") {
-    const cookie = cookieHeader
+    const accessTokenCookie = cookieHeader
       .split(";")
       .map((item) => item.trim())
       .find((item) => item.startsWith("accessToken="));
 
-    if (cookie) {
-      return decodeURIComponent(cookie.split("=")[1] ?? "");
+    if (accessTokenCookie) {
+      return decodeURIComponent(accessTokenCookie.split("=")[1] ?? "");
     }
+
+    const legacyTokenCookie = cookieHeader
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith("token="));
+
+    if (legacyTokenCookie) {
+      return decodeURIComponent(legacyTokenCookie.split("=")[1] ?? "");
+    }
+  }
+
+  const authToken = socket.handshake.auth?.token;
+  if (typeof authToken === "string" && authToken.length > 0) {
+    return authToken;
+  }
+
+  const authorization = socket.handshake.headers.authorization;
+  if (typeof authorization === "string" && authorization.startsWith("Bearer ")) {
+    return authorization.slice(7);
   }
 
   return undefined;

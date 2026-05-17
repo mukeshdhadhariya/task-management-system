@@ -62,7 +62,7 @@ export const login=async(req:Request,res:Response)=>{
         }
     );
 
-    res.cookie("token",token,{
+    res.cookie("accessToken",token,{
         httpOnly:true,
         secure:false,
         sameSite:"lax",
@@ -72,6 +72,7 @@ export const login=async(req:Request,res:Response)=>{
     return res.status(200).json({
         success:true,
         message:"login successfully",
+        token,
         user:{
             id:user.id,
             email:user.email,

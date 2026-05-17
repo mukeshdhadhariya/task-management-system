@@ -36,14 +36,16 @@ export const createTask=asyncHandler(async(req:Request,res:Response)=>{
 
 export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
   
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+  const query = (res.locals.validatedQuery ?? req.query) as Record<string, string | undefined>;
+
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
 
     const skip = (page - 1) * limit;
-    const status = req.query.status as string;
-    const priority = req.query.priority as string;
-    const sortBy=(req.query.sortBy as string) ||"createdAt"
-    const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
+  const status = query.status as string | undefined;
+  const priority = query.priority as string | undefined;
+  const sortBy=(query.sortBy as string) ||"createdAt"
+  const sortOrder = (query.sortOrder as "asc" | "desc") || "desc";
 
     const where: any = {};
     if (status) {

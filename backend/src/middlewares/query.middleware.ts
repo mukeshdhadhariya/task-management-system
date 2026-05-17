@@ -27,7 +27,7 @@ export const validateQuery =
       );
     }
 
-    req.query = result.data as any;
+    res.locals.validatedQuery = result.data;
 
     next();
   };

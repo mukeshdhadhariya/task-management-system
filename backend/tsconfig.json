@@ -7,5 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types", "./src/types"]
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": ["dist", "node_modules", "prisma", "prisma.config.ts"]
 }
