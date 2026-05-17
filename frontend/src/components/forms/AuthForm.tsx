@@ -14,10 +14,15 @@ interface AuthFormProps {
 export const AuthForm = ({ mode, onSubmit, isLoading }: AuthFormProps) => {
   const schema = mode === "login" ? loginSchema : registerSchema;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues | RegisterFormValues>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<LoginFormValues | RegisterFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
+
+  const useTestAdmin = () => {
+    setValue('email' as any, 'admin@gmail.com');
+    setValue('password' as any, 'admin1234');
+  };
 
   return (
     <form className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft md:p-8" onSubmit={handleSubmit(onSubmit)}>
@@ -26,6 +31,13 @@ export const AuthForm = ({ mode, onSubmit, isLoading }: AuthFormProps) => {
         <p className="mt-1 text-sm text-slate-500">
           {mode === "login" ? "Sign in to continue to your dashboard." : "Register and start managing tasks."}
         </p>
+        {mode === 'login' ? (
+          <div className="mt-3">
+            <button type="button" onClick={useTestAdmin} className="text-sm text-slate-700 underline">
+              Use test admin credentials
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
