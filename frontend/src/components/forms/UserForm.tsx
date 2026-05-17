@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
-import { userSchema, type UserSchemaValues } from "../../validators/user";
+import { userSchema, type UserFormValues, type UserSchemaValues } from "../../validators/user";
 import type { User } from "../../types";
 
 interface UserFormProps {
@@ -15,7 +15,7 @@ interface UserFormProps {
 }
 
 export const UserForm = ({ initialUser, isSaving, onSubmit }: UserFormProps) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserSchemaValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormValues, any, UserSchemaValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       email: initialUser?.email ?? "",
