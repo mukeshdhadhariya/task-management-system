@@ -18,11 +18,12 @@ app.use(cors({
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
-app.use(cookieParser())
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.use("/api/auth",);
-app.use("/api/users",);
-app.use("/api/tasks",)
+app.use("/api/auth",authRoutes);
+app.use("/api/users",userRoutes);
+app.use("/api/tasks",taskRoutes)
 app.get("/health", (_, res) => {
   res.json({ success: true, message: "API running" });
 });

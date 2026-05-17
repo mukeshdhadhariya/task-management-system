@@ -2,6 +2,8 @@ import { Request,Response } from "express";
 import {prisma} from "../config/prisma"
 import { ApiError } from "../utils/apierror";
 import { asyncHandler } from "../utils/asyncHandler";
+import { emitTaskEvent } from "../socket";
+import { taskRooms } from "../types";
 
 export const createTask=asyncHandler(async(req:Request,res:Response)=>{
 
@@ -15,6 +17,16 @@ export const createTask=asyncHandler(async(req:Request,res:Response)=>{
         assignedToId: req.body.assignedToId,
       },
     });
+
+    emitTaskEvent(
+      "task:created",
+      {
+        task,
+        actorUserId: req.user?.id ?? "",
+      },
+      taskRooms(task.assignedToId)
+    );
+
     return res.status(200).json({
         success: true,
         message: "task created ",
@@ -93,6 +105,19 @@ export const getTaskById = asyncHandler(
     if (!task) {
       throw new ApiError(404, "Task not found");
     }
+
+    const taskWithLinks = {
+      ...task,
+      attachments: task.attachments.map((file:any) => ({
+        id: file.id,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: file.size,
+        createdAt: file.createdAt,
+        downloadUrl: `/api/tasks/${task.id}/documents/${file.id}/download`,
+      })),
+    };
+
     const isOwner = task.assignedToId === req.user?.id;
     const isAdmin = req.user?.role === "ADMIN";
 
@@ -105,7 +130,7 @@ export const getTaskById = asyncHandler(
 
     return res.status(200).json({
       success: true,
-      data: task,
+      data: taskWithLinks,
     });
   }
 );
@@ -146,6 +171,18 @@ export const updateTask = asyncHandler(
       },
     });
 
+
+    emitTaskEvent(
+      "task:updated",
+      {
+        task: updatedTask,
+        actorUserId: req.user?.id ?? "",
+      },
+      [
+        ...taskRooms(existingTask.assignedToId),
+        ...taskRooms(updatedTask.assignedToId),
+      ]
+    );
     return res.status(200).json({
       success: true,
       message: "Task updated successfully",
@@ -180,6 +217,15 @@ export const deleteTask = asyncHandler(
         id: req.params.id,
       },
     });
+
+    emitTaskEvent(
+      "task:deleted",
+      {
+        task: existingTask,
+        actorUserId: req.user?.id ?? "",
+      },
+      taskRooms(existingTask.assignedToId)
+    );
 
     return res.status(200).json({
       success: true,

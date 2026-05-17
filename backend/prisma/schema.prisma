@@ -35,10 +35,15 @@ model Task {
 }
 
 model Attachment {
-  id        String   @id @default(uuid())
-  url       String
-  key       String
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  taskId        String
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  blobName      String   @unique
+  originalName   String
+  mimeType      String
+  size          Int
+  url           String
+
+  createdAt     DateTime @default(now())
 }
