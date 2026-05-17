@@ -16,6 +16,7 @@ export const UsersPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const loadUsers = useCallback(async () => {
@@ -34,15 +35,16 @@ export const UsersPage = () => {
   }, [loadUsers]);
 
   const saveUser = async (values: UserSchemaValues) => {
-    if (!selectedUser) {
-      return;
-    }
-
     setSaving(true);
 
     try {
-      await usersApi.update(selectedUser.id, values);
-      setSelectedUser(null);
+      if (selectedUser) {
+        await usersApi.update(selectedUser.id, values);
+        setSelectedUser(null);
+      } else {
+        await usersApi.create(values);
+        setCreateOpen(false);
+      }
       await loadUsers();
     } finally {
       setSaving(false);
@@ -67,7 +69,15 @@ export const UsersPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Users" description="Admin only control panel for managing user roles and accounts." />
+      <PageHeader
+        title="Users"
+        description="Admin only control panel for managing user roles and accounts."
+        actionLabel="Create user"
+        onAction={() => {
+          setSelectedUser(null);
+          setCreateOpen(true);
+        }}
+      />
 
       {loading ? <Spinner /> : users.length ? (
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
@@ -101,7 +111,10 @@ export const UsersPage = () => {
         <EmptyState title="No users found" description="There are no accounts to manage yet." />
       )}
 
-      <Modal title="Edit user" open={Boolean(selectedUser)} onClose={() => setSelectedUser(null)}>
+      <Modal title={selectedUser ? "Edit user" : "Create user"} open={Boolean(selectedUser) || createOpen} onClose={() => {
+        setSelectedUser(null);
+        setCreateOpen(false);
+      }}>
         <UserForm initialUser={selectedUser} isSaving={saving} onSubmit={saveUser} />
       </Modal>
 

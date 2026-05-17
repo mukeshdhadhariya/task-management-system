@@ -20,6 +20,7 @@ export const UserForm = ({ initialUser, isSaving, onSubmit }: UserFormProps) => 
     defaultValues: {
       email: initialUser?.email ?? "",
       role: initialUser?.role ?? "USER",
+        password: "",
     },
   });
 
@@ -27,6 +28,7 @@ export const UserForm = ({ initialUser, isSaving, onSubmit }: UserFormProps) => 
     reset({
       email: initialUser?.email ?? "",
       role: initialUser?.role ?? "USER",
+      password: "",
     });
   }, [initialUser, reset]);
 
@@ -37,6 +39,15 @@ export const UserForm = ({ initialUser, isSaving, onSubmit }: UserFormProps) => 
         <option value="USER">User</option>
         <option value="ADMIN">Admin</option>
       </Select>
+
+      {!initialUser ? (
+        <Input
+          label="Password"
+          type="password"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+      ) : null}
 
       <Button type="submit" disabled={isSaving}>
         {isSaving ? "Saving..." : initialUser ? "Update user" : "Create user"}

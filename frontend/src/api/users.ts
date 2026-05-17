@@ -8,6 +8,11 @@ export interface UserListResponse {
 }
 
 export const usersApi = {
+  async create(payload: UserFormValues) {
+    const { data } = await http.post<ApiResponse<User>>("/users", payload);
+    return data.data;
+  },
+
   async list() {
     const { data } = await http.get<UserListResponse>("/users");
     return data;

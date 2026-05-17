@@ -2,6 +2,7 @@ import { Request,Response } from "express";
 import {prisma} from "../config/prisma"
 import { ApiError } from "../utils/apierror";
 import { asyncHandler } from "../utils/asyncHandler";
+import bcrypt from "bcrypt";
 
 export const getUsers=asyncHandler(async(req:Request,res:Response)=>{
     const page=Number(req.query.page) || 1
@@ -31,6 +32,48 @@ export const getUsers=asyncHandler(async(req:Request,res:Response)=>{
         },
     })
 })
+
+export const createuser = asyncHandler(async (req: Request, res: Response) => {
+    const { email, password, role = "USER" } = req.body as {
+      email?: string;
+      password?: string;
+      role?: "ADMIN" | "USER";
+    };
+
+    if (!email || !password) {
+      throw new ApiError(400, "Email and password are required");
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ApiError(409, "User already exists");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "user created",
+      data: user,
+    });
+});
 
 export const getUserbyID=asyncHandler(async(req:Request,res:Response)=>{
     const { id } = req.params as { id: string };

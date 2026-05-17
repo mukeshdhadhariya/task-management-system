@@ -23,6 +23,7 @@ export const AdminPage = () => {
   const [saving, setSaving] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
   const [deleteTaskTarget, setDeleteTaskTarget] = useState<Task | null>(null);
   const [deleteUserTarget, setDeleteUserTarget] = useState<User | null>(null);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -87,15 +88,16 @@ export const AdminPage = () => {
   };
 
   const saveUser = async (values: UserSchemaValues) => {
-    if (!selectedUser) {
-      return;
-    }
-
     setSaving(true);
 
     try {
-      await usersApi.update(selectedUser.id, values);
-      setSelectedUser(null);
+      if (selectedUser) {
+        await usersApi.update(selectedUser.id, values);
+        setSelectedUser(null);
+      } else {
+        await usersApi.create(values);
+        setCreateUserOpen(false);
+      }
       setUserFormOpen(false);
       await loadAdminData();
     } finally {
@@ -193,6 +195,16 @@ export const AdminPage = () => {
                 <h2 className="text-lg font-semibold text-slate-900">All users</h2>
                 <p className="text-sm text-slate-500">Edit roles or remove inactive users.</p>
               </div>
+              <Button
+                type="button"
+                onClick={() => {
+                  setSelectedUser(null);
+                  setCreateUserOpen(true);
+                  setUserFormOpen(true);
+                }}
+              >
+                Create user
+              </Button>
             </div>
 
             {users.length ? (
@@ -245,7 +257,11 @@ export const AdminPage = () => {
         <TaskForm initialTask={selectedTask} users={users} isSaving={saving} onSubmit={saveTask} />
       </Modal>
 
-      <Modal title="Edit user" open={userFormOpen} onClose={() => setUserFormOpen(false)}>
+      <Modal title={selectedUser ? "Edit user" : "Create user"} open={userFormOpen} onClose={() => {
+        setUserFormOpen(false);
+        setSelectedUser(null);
+        setCreateUserOpen(false);
+      }}>
         <UserForm initialUser={selectedUser} isSaving={saving} onSubmit={saveUser} />
       </Modal>
 

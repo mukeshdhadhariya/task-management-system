@@ -88,6 +88,7 @@ export interface TaskQueryParams {
 export interface UserFormValues {
   email: string;
   role: Role;
+  password?: string;
 }
 
 export interface SessionState {
