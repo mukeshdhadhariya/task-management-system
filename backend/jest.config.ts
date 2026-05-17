@@ -6,6 +6,11 @@ const config: Config.InitialOptions = {
   roots: ['<rootDir>/tests', '<rootDir>/src'],
   testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
   setupFiles: ['<rootDir>/jest.setup.ts'],
+  globals: {
+    'ts-jest': {
+      tsconfig: '<rootDir>/tsconfig.test.json',
+    },
+  },
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coveragePathIgnorePatterns: [
