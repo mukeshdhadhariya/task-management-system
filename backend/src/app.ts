@@ -3,13 +3,16 @@ import cors from  "cors"
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser"
+// Use require here to avoid TypeScript declaration issues with swagger-ui-express.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const swaggerUi = require("swagger-ui-express");
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import taskRoutes from "./routes/task.routes";
+import { openApiSpec } from "./docs/openapi";
 
 const app=express();
-
 app.use(cors({
     origin:process.env.FRONTEND_URL,
     credentials:true
@@ -24,6 +27,7 @@ app.use(cookieParser());
 app.use("/api/auth",authRoutes);
 app.use("/api/users",userRoutes);
 app.use("/api/tasks",taskRoutes)
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 app.get("/health", (_, res) => {
   res.json({ success: true, message: "API running" });
 });
