@@ -15,16 +15,18 @@ export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pageMeta, setPageMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (page = 1) => {
     setLoading(true);
 
     try {
-      const response = await usersApi.list();
+      const response = await usersApi.list({ page, limit: 10 });
       setUsers(response.data);
+      setPageMeta(response.meta);
     } finally {
       setLoading(false);
     }
@@ -110,6 +112,32 @@ export const UsersPage = () => {
       ) : (
         <EmptyState title="No users found" description="There are no accounts to manage yet." />
       )}
+
+      {pageMeta.totalPages > 1 ? (
+        <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-soft">
+          <p>
+            Page {pageMeta.page} of {pageMeta.totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              disabled={pageMeta.page <= 1}
+              type="button"
+              onClick={() => void loadUsers(pageMeta.page - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={pageMeta.page >= pageMeta.totalPages}
+              type="button"
+              onClick={() => void loadUsers(pageMeta.page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Modal title={selectedUser ? "Edit user" : "Create user"} open={Boolean(selectedUser) || createOpen} onClose={() => {
         setSelectedUser(null);

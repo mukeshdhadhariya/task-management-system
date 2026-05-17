@@ -21,6 +21,8 @@ export const AdminPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [taskPageMeta, setTaskPageMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [userPageMeta, setUserPageMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [createUserOpen, setCreateUserOpen] = useState(false);
@@ -29,17 +31,19 @@ export const AdminPage = () => {
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [userFormOpen, setUserFormOpen] = useState(false);
 
-  const loadAdminData = useCallback(async () => {
+  const loadAdminData = useCallback(async (taskPage = 1, userPage = 1) => {
     setLoading(true);
 
     try {
       const [taskResponse, userResponse] = await Promise.all([
-        tasksApi.list({ page: 1, limit: 10, sortBy: "createdAt", sortOrder: "desc" }),
-        usersApi.list(),
+        tasksApi.list({ page: taskPage, limit: 10, sortBy: "createdAt", sortOrder: "desc" }),
+        usersApi.list({ page: userPage, limit: 10 }),
       ]);
 
       setTasks(taskResponse.data);
+      setTaskPageMeta(taskResponse.meta);
       setUsers(userResponse.data);
+      setUserPageMeta(userResponse.meta);
     } finally {
       setLoading(false);
     }
@@ -50,8 +54,9 @@ export const AdminPage = () => {
   }, [loadAdminData]);
 
   useSocketRefresh(() => {
-    void tasksApi.list({ page: 1, limit: 10, sortBy: "createdAt", sortOrder: "desc" }).then((response) => {
+    void tasksApi.list({ page: taskPageMeta.page, limit: taskPageMeta.limit, sortBy: "createdAt", sortOrder: "desc" }).then((response) => {
       setTasks(response.data);
+      setTaskPageMeta(response.meta);
     });
   });
 
@@ -180,10 +185,37 @@ export const AdminPage = () => {
             </div>
 
             {tasks.length ? (
-              <TaskTable tasks={tasks} onEdit={(task) => {
-                setSelectedTask(task);
-                setTaskFormOpen(true);
-              }} onDelete={setDeleteTaskTarget} />
+              <>
+                <TaskTable tasks={tasks} onEdit={(task) => {
+                  setSelectedTask(task);
+                  setTaskFormOpen(true);
+                }} onDelete={setDeleteTaskTarget} />
+                {taskPageMeta.totalPages > 1 ? (
+                  <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-sm text-slate-600">
+                    <p>
+                      Page {taskPageMeta.page} of {taskPageMeta.totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        disabled={taskPageMeta.page <= 1}
+                        type="button"
+                        onClick={() => void loadAdminData(taskPageMeta.page - 1, userPageMeta.page)}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={taskPageMeta.page >= taskPageMeta.totalPages}
+                        type="button"
+                        onClick={() => void loadAdminData(taskPageMeta.page + 1, userPageMeta.page)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <EmptyState title="No tasks yet" description="Create the first task for your team." />
             )}
@@ -208,44 +240,72 @@ export const AdminPage = () => {
             </div>
 
             {users.length ? (
-              <div className="overflow-hidden rounded-3xl border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50 text-left uppercase tracking-[0.15em] text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">Email</th>
-                      <th className="px-4 py-3">Role</th>
-                      <th className="px-4 py-3">Created</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-4 py-4 font-medium text-slate-900">{item.email}</td>
-                        <td className="px-4 py-4 text-slate-600">{item.role}</td>
-                        <td className="px-4 py-4 text-slate-600">{item.createdAt ? formatDate(item.createdAt) : "-"}</td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="secondary"
-                              type="button"
-                              onClick={() => {
-                                setSelectedUser(item);
-                                setUserFormOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button variant="danger" type="button" onClick={() => setDeleteUserTarget(item)}>
-                              Delete
-                            </Button>
-                          </div>
-                        </td>
+              <>
+                <div className="overflow-hidden rounded-3xl border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left uppercase tracking-[0.15em] text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">Email</th>
+                        <th className="px-4 py-3">Role</th>
+                        <th className="px-4 py-3">Created</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {users.map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-4 font-medium text-slate-900">{item.email}</td>
+                          <td className="px-4 py-4 text-slate-600">{item.role}</td>
+                          <td className="px-4 py-4 text-slate-600">{item.createdAt ? formatDate(item.createdAt) : "-"}</td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="secondary"
+                                type="button"
+                                onClick={() => {
+                                  setSelectedUser(item);
+                                  setUserFormOpen(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button variant="danger" type="button" onClick={() => setDeleteUserTarget(item)}>
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {userPageMeta.totalPages > 1 ? (
+                  <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
+                    <p>
+                      Page {userPageMeta.page} of {userPageMeta.totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        disabled={userPageMeta.page <= 1}
+                        type="button"
+                        onClick={() => void loadAdminData(taskPageMeta.page, userPageMeta.page - 1)}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={userPageMeta.page >= userPageMeta.totalPages}
+                        type="button"
+                        onClick={() => void loadAdminData(taskPageMeta.page, userPageMeta.page + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <EmptyState title="No users found" description="There are no accounts to manage yet." />
             )}
