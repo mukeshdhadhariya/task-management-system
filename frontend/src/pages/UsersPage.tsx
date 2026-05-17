@@ -7,6 +7,7 @@ import { Spinner } from "../components/common/Spinner";
 import { PageHeader } from "../components/layout/PageHeader";
 import { UserForm } from "../components/forms/UserForm";
 import { usersApi } from "../api/users";
+import { useDataCache } from "../context/DataCacheContext";
 import { formatDate } from "../utils/format";
 import type { User } from "../types";
 import type { UserSchemaValues } from "../validators/user";
@@ -19,18 +20,29 @@ export const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const { getCache, setCache, invalidateCache } = useDataCache();
 
   const loadUsers = useCallback(async (page = 1) => {
+    const cacheKey = `users:list:page=${page}&limit=10`;
+    const cached = getCache<{ data: User[]; meta: typeof pageMeta }>(cacheKey);
+    if (cached) {
+      setUsers(cached.value.data);
+      setPageMeta(cached.value.meta);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await usersApi.list({ page, limit: 10 });
       setUsers(response.data);
       setPageMeta(response.meta);
+      setCache(cacheKey, response);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getCache, pageMeta, setCache]);
 
   useEffect(() => {
     void loadUsers();
@@ -47,6 +59,7 @@ export const UsersPage = () => {
         await usersApi.create(values);
         setCreateOpen(false);
       }
+      invalidateCache("users:list:");
       await loadUsers();
     } finally {
       setSaving(false);
@@ -63,6 +76,7 @@ export const UsersPage = () => {
     try {
       await usersApi.remove(deleteTarget.id);
       setDeleteTarget(null);
+      invalidateCache("users:list:");
       await loadUsers();
     } finally {
       setSaving(false);
@@ -83,7 +97,32 @@ export const UsersPage = () => {
 
       {loading ? <Spinner /> : users.length ? (
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <div className="divide-y divide-slate-100 md:hidden">
+            {users.map((item) => (
+              <div key={item.id} className="space-y-4 p-4">
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-slate-900 break-words">{item.email}</p>
+                  <p className="text-sm text-slate-500">{item.role}</p>
+                </div>
+
+                <p className="text-sm text-slate-600">
+                  <span className="font-medium text-slate-500">Created: </span>
+                  {item.createdAt ? formatDate(item.createdAt) : "-"}
+                </p>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button className="w-full sm:w-auto" variant="secondary" type="button" onClick={() => setSelectedUser(item)}>
+                    Edit
+                  </Button>
+                  <Button className="w-full sm:w-auto" variant="danger" type="button" onClick={() => setDeleteTarget(item)}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <table className="hidden min-w-full divide-y divide-slate-200 text-sm md:table">
             <thead className="bg-slate-50 text-left uppercase tracking-[0.15em] text-slate-500">
               <tr>
                 <th className="px-4 py-3">Email</th>

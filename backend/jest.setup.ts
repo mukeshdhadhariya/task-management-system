@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 /// <reference types="jest" />
 // Basic test setup
 process.env.NODE_ENV = 'test';

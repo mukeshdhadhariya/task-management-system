@@ -7,30 +7,44 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { TaskTable } from "../components/tasks/TaskTable";
 import { tasksApi } from "../api/tasks";
 import { useAuth } from "../hooks/useAuth";
+import { useDataCache } from "../context/DataCacheContext";
 import { useSocketRefresh } from "../hooks/useSocketRefresh";
 import type { Task } from "../types";
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getCache, setCache, invalidateCache } = useDataCache();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = useCallback(async (forceRefresh = false) => {
+    const cacheKey = "tasks:dashboard:page=1&limit=8&sortBy=createdAt&sortOrder=desc";
+
+    if (!forceRefresh) {
+      const cached = getCache<{ data: Task[] }>(cacheKey);
+      if (cached) {
+        setTasks(cached.value.data);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const response = await tasksApi.list({ page: 1, limit: 8, sortBy: "createdAt", sortOrder: "desc" });
       setTasks(response.data);
+      setCache(cacheKey, response);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getCache, setCache]);
 
   useEffect(() => {
     void loadTasks();
   }, [loadTasks]);
 
-  useSocketRefresh(loadTasks);
+  useSocketRefresh(() => void loadTasks(true));
 
   const completed = tasks.filter((task) => task.status === "DONE").length;
   const inProgress = tasks.filter((task) => task.status === "IN_PROGRESS").length;

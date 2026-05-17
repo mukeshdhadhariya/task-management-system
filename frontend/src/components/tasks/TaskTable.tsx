@@ -13,7 +13,48 @@ interface TaskTableProps {
 
 export const TaskTable = ({ tasks, onEdit, onDelete }: TaskTableProps) => (
   <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-    <table className="min-w-full divide-y divide-slate-200">
+    <div className="divide-y divide-slate-100 md:hidden">
+      {tasks.map((task) => (
+        <div key={task.id} className="space-y-4 p-4">
+          <div className="space-y-2">
+            <Link to={`/tasks/${task.id}`} className="block text-base font-semibold text-slate-900 hover:underline">
+              {task.title}
+            </Link>
+            <p className="text-sm text-slate-500 line-clamp-3">{task.description}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Status</p>
+              <div className="mt-1"><Badge tone={task.status}>{task.status.replace("_", " ")}</Badge></div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Priority</p>
+              <div className="mt-1"><Badge tone={task.priority}>{task.priority}</Badge></div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Due</p>
+              <p className="mt-1 text-slate-700">{formatDate(task.dueDate)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Assigned</p>
+              <p className="mt-1 break-words text-slate-700">{task.assignedTo?.email ?? task.assignedToId}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="w-full sm:w-auto" variant="secondary" onClick={() => onEdit(task)} type="button">
+              Edit
+            </Button>
+            <Button className="w-full sm:w-auto" variant="danger" onClick={() => onDelete(task)} type="button">
+              Delete
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <table className="hidden min-w-full divide-y divide-slate-200 md:table">
       <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.15em] text-slate-500">
         <tr>
           <th className="px-4 py-3">Task</th>

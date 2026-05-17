@@ -25,15 +25,15 @@ export const AuthForm = ({ mode, onSubmit, isLoading }: AuthFormProps) => {
   };
 
   return (
-    <form className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft md:p-8" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:rounded-3xl sm:p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">{mode === "login" ? "Welcome back" : "Create your account"}</h2>
+        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{mode === "login" ? "Welcome back" : "Create your account"}</h2>
         <p className="mt-1 text-sm text-slate-500">
           {mode === "login" ? "Sign in to continue to your dashboard." : "Register and start managing tasks."}
         </p>
         {mode === 'login' ? (
           <div className="mt-3">
-            <button type="button" onClick={useTestAdmin} className="text-sm text-slate-700 underline">
+            <button type="button" onClick={useTestAdmin} className="text-sm text-slate-700 underline underline-offset-4">
               Use test admin credentials
             </button>
           </div>

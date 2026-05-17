@@ -10,6 +10,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { TaskForm } from "../components/forms/TaskForm";
 import { UserForm } from "../components/forms/UserForm";
 import { TaskTable } from "../components/tasks/TaskTable";
+import { useDataCache } from "../context/DataCacheContext";
 import { useSocketRefresh } from "../hooks/useSocketRefresh";
 import { formatDate } from "../utils/format";
 import type { Task, User } from "../types";
@@ -30,8 +31,24 @@ export const AdminPage = () => {
   const [deleteUserTarget, setDeleteUserTarget] = useState<User | null>(null);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [userFormOpen, setUserFormOpen] = useState(false);
+  const { getCache, setCache, invalidateCache } = useDataCache();
 
   const loadAdminData = useCallback(async (taskPage = 1, userPage = 1) => {
+    const taskCacheKey = `tasks:list:admin:page=${taskPage}&limit=10&sortBy=createdAt&sortOrder=desc`;
+    const userCacheKey = `users:list:admin:page=${userPage}&limit=10`;
+
+    const cachedTasks = getCache<{ data: Task[]; meta: typeof taskPageMeta }>(taskCacheKey);
+    const cachedUsers = getCache<{ data: User[]; meta: typeof userPageMeta }>(userCacheKey);
+
+    if (cachedTasks && cachedUsers) {
+      setTasks(cachedTasks.value.data);
+      setTaskPageMeta(cachedTasks.value.meta);
+      setUsers(cachedUsers.value.data);
+      setUserPageMeta(cachedUsers.value.meta);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -44,10 +61,12 @@ export const AdminPage = () => {
       setTaskPageMeta(taskResponse.meta);
       setUsers(userResponse.data);
       setUserPageMeta(userResponse.meta);
+      setCache(taskCacheKey, taskResponse);
+      setCache(userCacheKey, userResponse);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getCache, setCache, taskPageMeta, userPageMeta]);
 
   useEffect(() => {
     void loadAdminData();
@@ -57,6 +76,8 @@ export const AdminPage = () => {
     void tasksApi.list({ page: taskPageMeta.page, limit: taskPageMeta.limit, sortBy: "createdAt", sortOrder: "desc" }).then((response) => {
       setTasks(response.data);
       setTaskPageMeta(response.meta);
+      invalidateCache("tasks:list:admin:");
+      setCache(`tasks:list:admin:page=${taskPageMeta.page}&limit=10&sortBy=createdAt&sortOrder=desc`, response);
     });
   });
 
@@ -84,6 +105,7 @@ export const AdminPage = () => {
         await tasksApi.create(values);
       }
 
+      invalidateCache("tasks:list:");
       setSelectedTask(null);
       setTaskFormOpen(false);
       await loadAdminData();
@@ -104,6 +126,7 @@ export const AdminPage = () => {
         setCreateUserOpen(false);
       }
       setUserFormOpen(false);
+      invalidateCache("users:list:");
       await loadAdminData();
     } finally {
       setSaving(false);
@@ -120,6 +143,7 @@ export const AdminPage = () => {
     try {
       await tasksApi.remove(deleteTaskTarget.id);
       setDeleteTaskTarget(null);
+      invalidateCache("tasks:list:");
       await loadAdminData();
     } finally {
       setSaving(false);
@@ -136,6 +160,7 @@ export const AdminPage = () => {
     try {
       await usersApi.remove(deleteUserTarget.id);
       setDeleteUserTarget(null);
+      invalidateCache("users:list:");
       await loadAdminData();
     } finally {
       setSaving(false);
@@ -242,7 +267,38 @@ export const AdminPage = () => {
             {users.length ? (
               <>
                 <div className="overflow-hidden rounded-3xl border border-slate-200">
-                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <div className="divide-y divide-slate-100 md:hidden">
+                    {users.map((item) => (
+                      <div key={item.id} className="space-y-4 p-4">
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-slate-900 break-words">{item.email}</p>
+                          <p className="text-sm text-slate-500">{item.role}</p>
+                        </div>
+                        <p className="text-sm text-slate-600">
+                          <span className="font-medium text-slate-500">Created: </span>
+                          {item.createdAt ? formatDate(item.createdAt) : "-"}
+                        </p>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Button
+                            className="w-full sm:w-auto"
+                            variant="secondary"
+                            type="button"
+                            onClick={() => {
+                              setSelectedUser(item);
+                              setUserFormOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button className="w-full sm:w-auto" variant="danger" type="button" onClick={() => setDeleteUserTarget(item)}>
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <table className="hidden min-w-full divide-y divide-slate-200 text-sm md:table">
                     <thead className="bg-slate-50 text-left uppercase tracking-[0.15em] text-slate-500">
                       <tr>
                         <th className="px-4 py-3">Email</th>

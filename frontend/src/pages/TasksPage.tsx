@@ -11,6 +11,7 @@ import { TaskFilters } from "../components/tasks/TaskFilters";
 import { TaskTable } from "../components/tasks/TaskTable";
 import { tasksApi } from "../api/tasks";
 import { usersApi } from "../api/users";
+import { useDataCache } from "../context/DataCacheContext";
 import { useAuth } from "../hooks/useAuth";
 import { useSocketRefresh } from "../hooks/useSocketRefresh";
 import type { Task, TaskPriority, TaskStatus, User } from "../types";
@@ -27,7 +28,7 @@ export const TasksPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [pageMeta, setPageMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
-  const [usersLoaded, setUsersLoaded] = useState(false);
+  const { getCache, setCache, invalidateCache } = useDataCache();
 
   const query = useMemo(() => ({
     page: Number(searchParams.get("page") ?? 1),
@@ -38,38 +39,55 @@ export const TasksPage = () => {
     sortOrder: (searchParams.get("sortOrder") ?? "desc") as "asc" | "desc",
   }), [searchParams]);
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = useCallback(async (forceRefresh = false) => {
+    const cacheKey = `tasks:list:${JSON.stringify(query)}`;
+
+    if (!forceRefresh) {
+      const cached = getCache<{ data: Task[]; meta: typeof pageMeta }>(cacheKey);
+      if (cached) {
+        setTasks(cached.value.data);
+        setPageMeta(cached.value.meta);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
       const response = await tasksApi.list(query);
       setTasks(response.data);
       setPageMeta(response.meta);
+      setCache(cacheKey, response);
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [getCache, query, setCache, pageMeta]);
 
   const loadUsers = useCallback(async () => {
     if (user?.role !== "ADMIN") {
       setUsers(user ? [user] : []);
-      setUsersLoaded(true);
+      return;
+    }
+
+    const cacheKey = "users:list:page=1&limit=50";
+    const cached = getCache<{ data: User[] }>(cacheKey);
+    if (cached) {
+      setUsers(cached.value.data);
       return;
     }
 
     const response = await usersApi.list({ page: 1, limit: 50 });
     setUsers(response.data);
-    setUsersLoaded(true);
-  }, [user]);
+    setCache(cacheKey, response);
+  }, [getCache, setCache, user]);
 
   useEffect(() => {
     void loadTasks();
-    if (!usersLoaded) {
-      void loadUsers();
-    }
+    void loadUsers();
   }, [loadTasks, loadUsers]);
 
-  useSocketRefresh(loadTasks);
+  useSocketRefresh(() => void loadTasks(true));
 
   const openCreate = () => {
     setSelectedTask(null);
@@ -104,9 +122,10 @@ export const TasksPage = () => {
         await tasksApi.create(values);
       }
 
+      invalidateCache("tasks:list:");
       setFormOpen(false);
       setSelectedTask(null);
-      await loadTasks();
+      await loadTasks(true);
     } finally {
       setSaving(false);
     }
@@ -121,8 +140,9 @@ export const TasksPage = () => {
 
     try {
       await tasksApi.remove(deleteTarget.id);
+      invalidateCache("tasks:list:");
       setDeleteTarget(null);
-      await loadTasks();
+      await loadTasks(true);
     } finally {
       setSaving(false);
     }
