@@ -87,9 +87,10 @@ export const getalltasks=asyncHandler(async(req:Request,res:Response)=>{
 
 export const getTaskById = asyncHandler(
   async (req: Request, res: Response) => {
+      const { id } = req.params as { id: string };
     const task = await prisma.task.findUnique({
       where: {
-        id: req.params.id,
+          id,
       },
       include: {
         assignedTo: {
@@ -137,9 +138,10 @@ export const getTaskById = asyncHandler(
 
 export const updateTask = asyncHandler(
   async (req: Request, res: Response) => {
+      const { id } = req.params as { id: string };
     const existingTask = await prisma.task.findUnique({
       where: {
-        id: req.params.id,
+          id,
       },
     });
 
@@ -158,7 +160,7 @@ export const updateTask = asyncHandler(
     }
     const updatedTask = await prisma.task.update({
       where: {
-        id: req.params.id,
+        id,
       },
       data: {
         title: req.body.title,
@@ -193,9 +195,10 @@ export const updateTask = asyncHandler(
 
 export const deleteTask = asyncHandler(
   async (req: Request, res: Response) => {
+      const { id } = req.params as { id: string };
     const existingTask = await prisma.task.findUnique({
       where: {
-        id: req.params.id,
+          id,
       },
     });
 
@@ -214,7 +217,7 @@ export const deleteTask = asyncHandler(
     }
     await prisma.task.delete({
       where: {
-        id: req.params.id,
+          id,
       },
     });
 

@@ -110,7 +110,10 @@ export const uploadTaskDocuments = asyncHandler(
 
 export const downloadTaskDocument = asyncHandler(
   async (req: Request, res: Response) => {
-    const { taskId, attachmentId } = req.params;
+    const { taskId, attachmentId } = req.params as {
+      taskId: string;
+      attachmentId: string;
+    };
 
     const attachment = await prisma.attachment.findFirst({
       where: {

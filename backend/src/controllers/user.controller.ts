@@ -33,10 +33,11 @@ export const getUsers=asyncHandler(async(req:Request,res:Response)=>{
 })
 
 export const getUserbyID=asyncHandler(async(req:Request,res:Response)=>{
+    const { id } = req.params as { id: string };
 
     const user = await prisma.user.findUnique({ 
       where: {
-        id: req.params.id,
+        id,
       },
       select: {
         id: true,
@@ -57,9 +58,11 @@ export const getUserbyID=asyncHandler(async(req:Request,res:Response)=>{
 })
 
 export const updateuser=asyncHandler(async(req:Request,res:Response)=>{
+    const { id } = req.params as { id: string };
+
     const existingUser = await prisma.user.findUnique({
       where: {
-        id: req.params.id,
+        id,
       },
     });
 
@@ -68,7 +71,7 @@ export const updateuser=asyncHandler(async(req:Request,res:Response)=>{
     }
     const updatedUser = await prisma.user.update({
       where: {
-        id: req.params.id,
+        id,
       },
       data: {
         email: req.body.email,
@@ -89,10 +92,11 @@ export const updateuser=asyncHandler(async(req:Request,res:Response)=>{
 
 
 export const deleteuser=asyncHandler(async(req:Request,res:Response)=>{
+    const { id } = req.params as { id: string };
 
     const existingUser = await prisma.user.findUnique({
       where: {
-        id: req.params.id,
+        id,
       },
     });
 
@@ -101,7 +105,7 @@ export const deleteuser=asyncHandler(async(req:Request,res:Response)=>{
     }
     await prisma.user.delete({
       where: {
-        id: req.params.id,
+        id,
       },
     });
     return res.status(200).json({
