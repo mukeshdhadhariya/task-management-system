@@ -13,8 +13,8 @@ export const usersApi = {
     return data.data;
   },
 
-  async list() {
-    const { data } = await http.get<UserListResponse>("/users");
+  async list(params?: { page?: number; limit?: number }) {
+    const { data } = await http.get<UserListResponse>("/users", { params });
     return data;
   },
 

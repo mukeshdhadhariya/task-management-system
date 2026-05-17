@@ -27,6 +27,7 @@ export const TasksPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [pageMeta, setPageMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [usersLoaded, setUsersLoaded] = useState(false);
 
   const query = useMemo(() => ({
     page: Number(searchParams.get("page") ?? 1),
@@ -52,16 +53,20 @@ export const TasksPage = () => {
   const loadUsers = useCallback(async () => {
     if (user?.role !== "ADMIN") {
       setUsers(user ? [user] : []);
+      setUsersLoaded(true);
       return;
     }
 
-    const response = await usersApi.list();
+    const response = await usersApi.list({ page: 1, limit: 50 });
     setUsers(response.data);
+    setUsersLoaded(true);
   }, [user]);
 
   useEffect(() => {
     void loadTasks();
-    void loadUsers();
+    if (!usersLoaded) {
+      void loadUsers();
+    }
   }, [loadTasks, loadUsers]);
 
   useSocketRefresh(loadTasks);
