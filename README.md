@@ -169,5 +169,5 @@ Use this test admin account for the walkthrough:
 
 ## Final Note
 
-This project is not a MongoDB-based MERN clone. It is a React + Node.js/Express full-stack system with PostgreSQL and Prisma, which is a stronger fit for relational task, user, and attachment data. If you want a short label, you can describe it as a modern MERN-style full-stack application with PostgreSQL instead of MongoDB.
+It is a React + Node.js/Express full-stack system with PostgreSQL and Prisma, which is a stronger fit for relational task, user, and attachment data. If you want a short label, you can describe it as a modern MERN-style full-stack application with PostgreSQL instead of MongoDB.
 
