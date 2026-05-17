@@ -2,10 +2,8 @@ import express from "express"
 import cors from  "cors"
 import helmet from "helmet";
 import morgan from "morgan";
-import cookieParser from "cookie-parser"
-// Use require here to avoid TypeScript declaration issues with swagger-ui-express.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const swaggerUi = require("swagger-ui-express");
+import cookieParser from "cookie-parser";
+import swaggerUi from "swagger-ui-express";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
